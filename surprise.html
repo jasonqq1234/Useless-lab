@@ -5,7 +5,7 @@
      crossorigin="anonymous"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>無用實驗室 (Useless Lab)</title>
+    <title>滑到底下有驚喜 - 無用實驗室</title>
     <!-- 引入 Vue 3 -->
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <style>
@@ -509,15 +509,7 @@
     </div>
 
     <div id="app">
-        <!-- Navigation -->
-        <nav v-show="!isFullScreen">
-            <button :class="{active: currentTab === 'progress'}" @click="switchTab('progress')">世界最慢進度條</button>
-            <button :class="{active: currentTab === 'hacker'}" @click="switchTab('hacker')">假裝在寫代碼</button>
-            <button :class="{active: currentTab === 'calc'}" @click="switchTab('calc')">極度任性計算機</button>
-            <a href="surprise.html" target="_blank" style="text-decoration: none;">
-                <button style="background: #e53935; color: white; cursor: pointer;">滑到底下有驚喜 ➔</button>
-            </a>
-        </nav>
+        <!-- No Navigation -->
 
         <!-- View 1: Useless Progress Bar -->
         <div class="view progress-view" v-show="currentTab === 'progress'" @click.self="isFullScreen = !isFullScreen">
@@ -806,7 +798,7 @@ MODULE_DESCRIPTION("Core System Override");
 
         createApp({
             setup() {
-                const currentTab = ref('progress'); 
+                const currentTab = ref('ads'); 
                 const isFullScreen = ref(false); 
                 
                 // ==========================================
