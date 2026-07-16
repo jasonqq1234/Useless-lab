@@ -1,0 +1,1273 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>無用實驗室 (Useless Lab)</title>
+    <!-- 引入 Vue 3 -->
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <style>
+        /* CSS reset & base */
+        body, html { 
+            margin: 0; 
+            padding: 0; 
+            height: 100%; 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            overflow: hidden; 
+            background: #222;
+        }
+        #app { height: 100%; display: flex; flex-direction: column; }
+
+        /* Navigation Bar */
+        nav { 
+            background: rgba(30, 30, 30, 0.95); 
+            padding: 15px 20px; 
+            display: flex; 
+            gap: 15px; 
+            z-index: 100; 
+            position: relative;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.5);
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        nav button { 
+            padding: 10px 20px; 
+            cursor: pointer; 
+            background: #444; 
+            color: #ccc; 
+            border: none; 
+            border-radius: 8px; 
+            font-size: 16px;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+        nav button:hover { background: #555; color: #fff; transform: translateY(-2px); }
+        nav button.active { background: #4CAF50; color: white; box-shadow: 0 4px 15px rgba(76, 175, 80, 0.4); transform: translateY(-2px); }
+
+        /* Views */
+        .view { flex: 1; position: relative; overflow: hidden; }
+
+        /* --- Feature 1: The Useless Progress Bar --- */
+        .progress-view { 
+            background: #008080; 
+            display: flex; justify-content: center; align-items: center; 
+        }
+        .win-window {
+            background: #ece9d8; 
+            border: 1px solid #0055ea; 
+            border-radius: 6px 6px 0 0; 
+            width: 450px;
+            box-shadow: 2px 2px 15px rgba(0,0,0,0.5); 
+            font-family: 'Tahoma', sans-serif;
+            color: #000;
+            position: relative;
+        }
+        .win-titlebar { 
+            background: linear-gradient(to right, #0058ee, #3593ff, #288eff); 
+            color: white; 
+            padding: 6px 12px; 
+            font-weight: bold; 
+            font-size: 14px;
+            border-radius: 4px 4px 0 0; 
+            display: flex;
+            justify-content: space-between;
+        }
+        .win-titlebar .close-btn {
+            background: #e04343;
+            color: white;
+            border: 1px solid white;
+            border-radius: 3px;
+            width: 20px; height: 20px;
+            display: flex; justify-content: center; align-items: center;
+            font-size: 12px;
+            cursor: pointer;
+        }
+        .win-content { padding: 25px; position: relative; }
+        .status-text { margin-bottom: 10px; font-size: 13px; min-height: 20px; font-weight: 500;}
+        .progress-container { 
+            border: 1px solid #a0a0a0; 
+            border-right-color: #fff; border-bottom-color: #fff;
+            background: #fff; 
+            height: 22px; 
+            margin: 15px 0; 
+            position: relative; 
+            padding: 2px;
+        }
+        .progress-bar { 
+            background: linear-gradient(to bottom, #288eff 0%, #0058ee 100%); 
+            height: 100%; 
+            transition: width 0.3s ease-out, background 0.3s; 
+        }
+        .progress-bar.rollback {
+            background: linear-gradient(to bottom, #ff2828 0%, #ee0000 100%); 
+        }
+        .progress-text { text-align: right; margin-top: 5px; font-size: 12px; color: #555; }
+        .win-footer {
+            display: flex;
+            justify-content: flex-end;
+            margin-top: 15px;
+            position: relative;
+            height: 30px;
+        }
+        .win-btn {
+            background: #f0f0f0;
+            border: 1px solid #000;
+            padding: 4px 20px;
+            font-family: 'Tahoma', sans-serif;
+            cursor: pointer;
+            color: #000;
+            position: absolute;
+            right: 0;
+            z-index: 10;
+        }
+        .hint-text {
+            position: absolute;
+            top: 20px; right: 20px;
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 14px;
+            pointer-events: none;
+        }
+        /* Fake Captcha */
+        .fake-captcha-overlay {
+            position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(255,255,255,0.85);
+            display: flex; justify-content: center; align-items: center;
+            z-index: 50;
+            backdrop-filter: blur(2px);
+        }
+        .captcha-box {
+            border: 1px solid #ccc; background: #f9f9f9;
+            padding: 20px; border-radius: 4px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+            display: flex; align-items: center; gap: 15px;
+            font-size: 16px; font-family: sans-serif;
+            position: relative;
+        }
+        .captcha-checkbox {
+            width: 24px; height: 24px; cursor: pointer;
+            position: relative;
+        }
+
+        /* --- Feature 2: Hacker Typer Clone --- */
+        .hacker-view { 
+            background: #000; 
+            color: #0f0; 
+            font-family: 'Courier New', Courier, monospace; 
+            padding: 20px; 
+            overflow-y: auto; 
+            text-shadow: 0 0 5px #0f0; 
+            font-size: 18px; 
+            white-space: pre-wrap; 
+            word-wrap: break-word;
+            cursor: text;
+        }
+        .cursor { animation: blink 1s step-end infinite; }
+        @keyframes blink { 50% { opacity: 0; } }
+        .access-denied {
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            background: red; color: white; 
+            border: 4px solid white; 
+            padding: 30px 60px; 
+            font-size: 48px; 
+            font-weight: bold; 
+            font-family: 'Arial', sans-serif;
+            text-shadow: none; 
+            animation: flash 0.5s infinite; 
+            z-index: 10;
+            box-shadow: 0 0 50px red;
+        }
+        
+        /* Clippy */
+        .clippy-container {
+            position: absolute; bottom: 30px; right: 40px;
+            display: flex; align-items: flex-end; gap: 10px; z-index: 100;
+        }
+        .clippy-bubble {
+            background: #ffffe1; border: 1px solid #000; padding: 15px;
+            border-radius: 10px; color: #000; font-family: sans-serif;
+            font-size: 14px; position: relative;
+            box-shadow: 2px 2px 5px rgba(0,0,0,0.5);
+            margin-bottom: 30px;
+        }
+        .clippy-bubble::after {
+            content: ''; position: absolute; bottom: -10px; right: 20px;
+            border-width: 10px 10px 0 10px; border-style: solid;
+            border-color: #ffffe1 transparent transparent transparent;
+        }
+        .clippy-btn {
+            background: #eee; border: 1px solid #999; border-radius: 3px; 
+            padding: 4px 10px; cursor: pointer;
+        }
+
+        /* --- Feature 3: Moody Calculator --- */
+        .calc-view { 
+            background: #e0e5ec; 
+            display: flex; justify-content: center; align-items: center; 
+        }
+        .calculator { 
+            background: #e0e5ec; 
+            padding: 35px; 
+            border-radius: 30px; 
+            box-shadow: 9px 9px 16px rgb(163,177,198,0.6), -9px -9px 16px rgba(255,255,255, 0.5); 
+            width: 320px; 
+        }
+        .calc-display { 
+            background: #e0e5ec; 
+            box-shadow: inset 6px 6px 10px 0 rgba(163,177,198,0.7), inset -6px -6px 10px 0 rgba(255,255,255,0.8); 
+            border-radius: 15px; 
+            padding: 25px 20px; 
+            margin-bottom: 25px; 
+            text-align: right; 
+            font-size: 32px; 
+            color: #333; 
+            min-height: 40px; 
+            word-break: break-all;
+            font-family: 'Courier New', Courier, monospace;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+        }
+        .calc-display.error-text { 
+            font-size: 16px; 
+            color: #d32f2f; 
+            font-family: sans-serif;
+            text-align: center;
+            justify-content: center;
+        }
+        .calc-buttons { 
+            display: grid; 
+            grid-template-columns: repeat(4, 1fr); 
+            grid-template-rows: repeat(5, 60px);
+            gap: 15px; 
+        }
+        .calc-btn { 
+            border: none; outline: none; background: #e0e5ec; 
+            font-size: 22px; font-weight: bold;
+            border-radius: 12px; cursor: pointer; color: #444; 
+            box-shadow: 6px 6px 10px 0 rgba(163,177,198,0.7), -6px -6px 10px 0 rgba(255,255,255,0.8); 
+            transition: all 0.1s; 
+            display: flex; justify-content: center; align-items: center;
+        }
+        .calc-btn:active:not(.disabled) { 
+            box-shadow: inset 4px 4px 6px 0 rgba(163,177,198,0.7), inset -4px -4px 6px 0 rgba(255,255,255,0.8); 
+        }
+        .calc-btn.disabled { opacity: 0.5; cursor: not-allowed; }
+        .calc-btn.operator { color: #ff7043; }
+        .calc-btn.eq { background: #ff7043; color: white; box-shadow: 4px 4px 10px rgba(255, 112, 67, 0.4); }
+        .calc-btn.eq:active:not(.disabled) { box-shadow: inset 4px 4px 6px rgba(200, 80, 40, 0.8); }
+
+        /* --- Feature 4: Full Ads View --- */
+        .ads-view {
+            background: #f4f6f8;
+            overflow-y: auto;
+            padding: 30px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            justify-content: center;
+            align-content: flex-start;
+            position: relative;
+        }
+        .ads-header {
+            width: 100%;
+            text-align: center;
+            font-family: sans-serif;
+            margin-bottom: 20px;
+            color: #333;
+            background: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+        }
+        .ads-header h1 { font-size: 32px; margin-bottom: 15px; color: #e53935; font-weight: 900;}
+        .ads-header p { font-size: 18px; color: #555; font-weight: bold;}
+        
+        .jumping-timer {
+            position: fixed;
+            z-index: 150;
+            color: #d32f2f;
+            font-size: 42px;
+            font-weight: 900;
+            font-family: monospace;
+            background: rgba(255, 255, 255, 0.95);
+            border: 3px solid #d32f2f;
+            padding: 5px 15px;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            pointer-events: none; 
+            transition: top 0.2s, left 0.2s;
+            white-space: nowrap;
+        }
+
+        .floating-text {
+            position: fixed;
+            z-index: 140;
+            color: #666;
+            font-weight: bold;
+            pointer-events: none;
+            opacity: 0.8;
+            text-shadow: 1px 1px 2px #fff;
+            animation: floatUp 3s forwards;
+            white-space: nowrap;
+        }
+        @keyframes floatUp {
+            0% { transform: translateY(0); opacity: 1; }
+            100% { transform: translateY(-50px); opacity: 0; }
+        }
+
+        .ayt-container {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none; 
+            z-index: 200;
+        }
+        .ayt-warning {
+            position: absolute; top: 15%; left: 50%; transform: translateX(-50%);
+            background: red; color: white; padding: 15px 30px; font-size: 28px; font-weight: bold;
+            border: 4px solid yellow; border-radius: 10px; animation: flash 0.3s infinite;
+            text-align: center;
+            white-space: nowrap;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.5);
+        }
+        @keyframes flash { 0%, 100% { background: red; color: white; } 50% { background: #d50000; color: yellow; } }
+
+        .ayt-btn {
+            position: absolute; top: 50%; left: 50%;
+            pointer-events: auto; 
+            padding: 15px 40px; font-size: 22px; font-weight: bold;
+            background: #ffeb3b; border: 3px solid #000; color: #000;
+            border-radius: 8px; cursor: pointer;
+            box-shadow: 4px 4px 0 #000;
+        }
+        .ayt-btn:hover { background: #fbc02d; }
+
+        .minus-one-btn {
+            position: absolute;
+            z-index: 145;
+            padding: 10px 20px;
+            font-size: 18px;
+            font-weight: bold;
+            background: #4CAF50;
+            color: white;
+            border: 2px solid #388E3C;
+            border-radius: 8px;
+            cursor: pointer;
+            box-shadow: 2px 2px 5px rgba(0,0,0,0.3);
+        }
+
+        .lottery-display {
+            font-size: 32px;
+            font-weight: 900;
+            color: #d32f2f;
+            padding: 30px;
+            background: #fff;
+            border: 4px dashed #ff9800;
+            border-radius: 10px;
+            animation: flash 0.5s infinite;
+        }
+
+        .surprise-container {
+            width: 100%;
+            text-align: center;
+            margin-top: 50px;
+            padding: 40px;
+            background: #fff3e0;
+            border: 2px dashed #ff9800;
+            border-radius: 10px;
+        }
+        
+        .ad-slot {
+            background: #fff;
+            border: 2px dashed #ff9800;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: #666;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-size: 14px;
+            text-align: center;
+            position: relative;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+            transition: all 0.3s;
+            overflow: hidden;
+        }
+        .ad-slot:hover {
+            border-color: #f44336;
+            background: #fff3e0;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+        }
+        .ad-slot::before {
+            content: "廣告 (Advertisement)";
+            position: absolute;
+            top: 0; left: 0;
+            background: #ff9800;
+            color: #fff;
+            font-size: 10px;
+            padding: 2px 6px;
+            border-bottom-right-radius: 4px;
+            font-weight: bold;
+        }
+        .ad-slot span { pointer-events: none; }
+        .ad-970x250 { width: 970px; height: 250px; }
+        .ad-728x90 { width: 728px; height: 90px; }
+        .ad-300x250 { width: 300px; height: 250px; }
+        .ad-336x280 { width: 336px; height: 280px; }
+        .ad-160x600 { width: 160px; height: 600px; }
+        .ad-320x100 { width: 320px; height: 100px; }
+        .ad-fluid { width: 100%; height: 150px; } 
+
+        /* Exit Intent */
+        .exit-intent-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.85);
+            display: flex; justify-content: center; align-items: center;
+            z-index: 10000;
+        }
+        .exit-intent-box {
+            background: #fff; padding: 40px; border-radius: 12px;
+            text-align: center; border: 5px solid #f44336;
+            max-width: 500px; width: 90%;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .exit-intent-box h2 { color: #f44336; margin-top: 0; font-size: 32px; font-weight: 900;}
+        .exit-intent-box p { font-size: 20px; color: #333; margin-bottom: 30px; font-weight: bold;}
+        .exit-btn-group {
+            display: flex; justify-content: center; gap: 20px; position: relative;
+            min-height: 60px;
+        }
+        .stay-btn { background: #4CAF50; color: white; padding: 15px 30px; font-size: 20px; font-weight: bold; border-radius: 8px; border: none; cursor: pointer; transition: 0.2s;}
+        .stay-btn:hover { background: #388E3C; transform: scale(1.05); }
+        .leave-btn { background: #aaa; color: white; padding: 15px 30px; font-size: 20px; font-weight: bold; border-radius: 8px; border: none; cursor: pointer; position: relative; }
+
+        .repeating-watermark {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            pointer-events: none;
+            z-index: 9980;
+            background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='400' height='400'><text x='50' y='200' transform='rotate(-30 200 200)' font-family='Arial Black' font-size='40' font-weight='900' fill='rgba(0,0,0,0.04)'>SAMPLE ONLY</text><text x='150' y='350' transform='rotate(-30 200 200)' font-family='Arial' font-size='20' fill='rgba(0,0,0,0.03)'>DO NOT USE</text></svg>");
+            background-repeat: repeat;
+        }
+    </style>
+</head>
+<body>
+    <!-- 全局惡意假元素 -->
+    <!-- Unregistered HyperCam 2 -->
+    <div style="position: fixed; top: 5px; left: 10px; color: white; background: transparent; font-family: 'Arial Black', Arial, sans-serif; font-size: 18px; font-weight: bold; text-shadow: -2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 2px 2px 0 #000; pointer-events: none; z-index: 9999; letter-spacing: -0.5px; opacity: 0.8;">
+        Unregistered HyperCam 2
+    </div>
+    <!-- BANDICAM -->
+    <div style="position: fixed; top: 10px; left: 50%; transform: translateX(-50%); color: white; background: transparent; font-family: Arial, sans-serif; font-size: 22px; font-weight: bold; text-shadow: -1.5px -1.5px 0 #000, 1.5px -1.5px 0 #000, -1.5px 1.5px 0 #000, 1.5px 1.5px 0 #000; pointer-events: none; z-index: 9999; opacity: 0.6;">
+        www.BANDICAM.com
+    </div>
+    <!-- 巨大浮水印 -->
+    <div style="position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%) rotate(-30deg); font-size: 100px; font-weight: 900; color: #000; opacity: 0.03; pointer-events: none; z-index: 9990; white-space: nowrap; font-family: Impact, sans-serif; user-select: none;">
+        TRIAL VERSION - DO NOT DISTRIBUTE
+    </div>
+    <div style="position: fixed; top: 42%; left: 58%; width: 1px; height: 1px; background: #ff0000; box-shadow: 0 0 2px #ff0000; pointer-events: none; z-index: 9999;"></div>
+    <svg style="position: fixed; top: 30%; left: 40%; width: 80px; height: 80px; pointer-events: none; z-index: 9999; opacity: 0.6; filter: drop-shadow(1px 1px 1px rgba(0,0,0,0.3));" viewBox="0 0 100 100">
+        <path d="M 20 80 Q 30 10 70 50 T 80 80" fill="none" stroke="#111" stroke-width="1.2" stroke-linecap="round" />
+    </svg>
+    <div style="position: fixed; bottom: 60px; right: 50px; color: rgba(255,255,255,0.35); font-family: 'Segoe UI', sans-serif; pointer-events: none; z-index: 9998; user-select: none;">
+        <div style="font-size: 26px; font-weight: normal; margin-bottom: 2px;">啟用 Windows</div>
+        <div style="font-size: 15px;">移至 [設定] 以啟用 Windows。</div>
+    </div>
+
+    <!-- 滿滿的網格狀浮水印 -->
+    <div class="repeating-watermark"></div>
+
+    <!-- Shutterstock 假浮水印 -->
+    <div style="position: fixed; top: 20%; left: 10%; transform: rotate(-15deg); font-size: 80px; font-weight: bold; color: rgba(255, 255, 255, 0.4); text-shadow: 2px 2px 5px rgba(0,0,0,0.2); pointer-events: none; z-index: 9985; user-select: none;">
+        shutter<span style="color: rgba(255, 50, 50, 0.4);">stock</span>
+    </div>
+    <div style="position: fixed; bottom: 20%; right: 10%; transform: rotate(15deg); font-size: 80px; font-weight: bold; color: rgba(255, 255, 255, 0.4); text-shadow: 2px 2px 5px rgba(0,0,0,0.2); pointer-events: none; z-index: 9985; user-select: none;">
+        shutter<span style="color: rgba(255, 50, 50, 0.4);">stock</span>
+    </div>
+
+    <!-- 抖音假浮水印 -->
+    <div style="position: fixed; top: 15%; right: 10%; pointer-events: none; z-index: 9991; display: flex; align-items: center; gap: 8px; opacity: 0.7;">
+        <div style="font-size: 30px; font-weight: bold; color: white; text-shadow: -2px 0 0 #00f0ff, 2px 0 0 #ff0050;">♪</div>
+        <div style="font-size: 18px; color: white; text-shadow: 1px 1px 2px #000; font-family: sans-serif;">@useless_lab_official</div>
+    </div>
+
+    <!-- KINEMASTER -->
+    <div style="position: fixed; top: 10px; right: 10px; color: white; background: rgba(0,0,0,0.5); padding: 5px 10px; border-radius: 20px; font-family: sans-serif; font-size: 14px; font-weight: bold; pointer-events: none; z-index: 9992; opacity: 0.8; display: flex; align-items: center; gap: 5px;">
+        <span style="color: #ff5252; font-size: 18px;">K</span> KINEMASTER
+    </div>
+
+    <!-- FRAPS FPS -->
+    <div style="position: fixed; top: 5px; left: 250px; color: #ffff00; font-family: 'Courier New', Courier, monospace; font-size: 24px; font-weight: bold; text-shadow: 1px 1px 0 #000; pointer-events: none; z-index: 9995;">
+        99
+    </div>
+
+    <!-- FilmoraGo -->
+    <div style="position: fixed; bottom: 10px; left: 10px; color: white; font-family: sans-serif; font-size: 16px; font-weight: bold; text-shadow: 1px 1px 2px #000; pointer-events: none; z-index: 9992; opacity: 0.7;">
+        Created with FilmoraGo
+    </div>
+
+    <div id="app">
+        <!-- Navigation -->
+        <nav v-show="!isFullScreen">
+            <button :class="{active: currentTab === 'progress'}" @click="switchTab('progress')">世界最慢進度條</button>
+            <button :class="{active: currentTab === 'hacker'}" @click="switchTab('hacker')">假裝在寫代碼</button>
+            <button :class="{active: currentTab === 'calc'}" @click="switchTab('calc')">極度任性計算機</button>
+            <button :class="{active: currentTab === 'ads'}" @click="switchTab('ads')" style="background: #e53935; color: white;">滑到底下有驚喜</button>
+        </nav>
+
+        <!-- View 1: Useless Progress Bar -->
+        <div class="view progress-view" v-show="currentTab === 'progress'" @click.self="isFullScreen = !isFullScreen">
+            <div class="hint-text" v-show="!isFullScreen">點擊背景可隱藏/顯示選單</div>
+            <div class="win-window" @click.stop>
+                <div class="win-titlebar">
+                    <span>正在下載大宇宙的意志...</span>
+                    <div class="close-btn" @click="alert('系統拒絕了你的關閉請求。你必須等。')">x</div>
+                </div>
+                <div class="win-content">
+                    <div class="status-text">{{ progressStatus }}</div>
+                    <div class="progress-container">
+                        <div class="progress-bar" :class="{ rollback: isRollback }" :style="{ width: progress + '%' }"></div>
+                    </div>
+                    <div class="progress-text">{{ progress.toFixed(1) }}%</div>
+                    <div class="win-footer">
+                        <button class="win-btn" :style="cancelBtnStyle" @mouseover="dodgeCancel">取消</button>
+                    </div>
+
+                    <div class="fake-captcha-overlay" v-show="showCaptcha">
+                        <div class="captcha-box">
+                            <input type="checkbox" class="captcha-checkbox" :style="captchaStyle" @mouseover="dodgeCaptcha">
+                            <span>我不是機器人</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- View 2: Hacker Typer -->
+        <div class="view hacker-view" v-show="currentTab === 'hacker'" ref="hackerContainer" @click="isFullScreen = !isFullScreen">
+            <div class="hint-text" v-show="!isFullScreen">點擊畫面可隱藏/顯示選單。隨便敲擊鍵盤開始寫代碼。</div>
+            <div class="hacker-text">{{ typedCode }}<span class="cursor">|</span></div>
+            <div class="access-denied" v-if="showAccessDenied">ACCESS DENIED</div>
+            
+            <div class="clippy-container" v-show="showClippy">
+                <div class="clippy-bubble">
+                    看起來你正在假裝駭客。<br>需要我幫你開啟真正的命令提示字元嗎？
+                    <div style="margin-top: 10px; display:flex; gap:10px; justify-content: flex-end;">
+                        <button class="clippy-btn" @click="alert('系統找不到命令提示字元。'); showClippy = false">是的</button>
+                        <button class="clippy-btn" :style="clippyBtnStyle" @mouseover="dodgeClippyBtn">不用了</button>
+                    </div>
+                </div>
+                <div style="font-size: 60px; line-height: 1; margin-bottom: 20px;">📎</div>
+            </div>
+        </div>
+
+        <!-- View 3: Moody Calculator -->
+        <div class="view calc-view" v-show="currentTab === 'calc'">
+            <div class="calculator">
+                <div class="calc-display" :class="{'error-text': isCalcError}">
+                    {{ calcDisplay || '0' }}
+                </div>
+                <div class="calc-buttons">
+                    <button class="calc-btn operator" :class="{disabled: calcDisabled}" @click="calcInput('C')" style="color: #d32f2f;">C</button>
+                    <button class="calc-btn operator" :class="{disabled: calcDisabled}" @click="calcInput('/')">/</button>
+                    <button class="calc-btn operator" :class="{disabled: calcDisabled}" @click="calcInput('*')">*</button>
+                    <button class="calc-btn operator" :class="{disabled: calcDisabled}" @click="calcInput('-')">-</button>
+                    
+                    <button class="calc-btn" :class="{disabled: calcDisabled}" @click="calcInput(numPad[0])">{{ numPad[0] }}</button>
+                    <button class="calc-btn" :class="{disabled: calcDisabled}" @click="calcInput(numPad[1])">{{ numPad[1] }}</button>
+                    <button class="calc-btn" :class="{disabled: calcDisabled}" @click="calcInput(numPad[2])">{{ numPad[2] }}</button>
+                    <button class="calc-btn operator" :class="{disabled: calcDisabled}" @click="calcInput('+')" style="grid-row: span 2;">+</button>
+                    
+                    <button class="calc-btn" :class="{disabled: calcDisabled}" @click="calcInput(numPad[3])">{{ numPad[3] }}</button>
+                    <button class="calc-btn" :class="{disabled: calcDisabled}" @click="calcInput(numPad[4])">{{ numPad[4] }}</button>
+                    <button class="calc-btn" :class="{disabled: calcDisabled}" @click="calcInput(numPad[5])">{{ numPad[5] }}</button>
+                    
+                    <button class="calc-btn" :class="{disabled: calcDisabled}" @click="calcInput(numPad[6])">{{ numPad[6] }}</button>
+                    <button class="calc-btn" :class="{disabled: calcDisabled}" @click="calcInput(numPad[7])">{{ numPad[7] }}</button>
+                    <button class="calc-btn" :class="{disabled: calcDisabled}" @click="calcInput(numPad[8])">{{ numPad[8] }}</button>
+                    <button class="calc-btn eq" :class="{disabled: calcDisabled}" @click="calcInput('=')" style="grid-row: span 2;">=</button>
+                    
+                    <button class="calc-btn" :class="{disabled: calcDisabled}" @click="calcInput(numPad[9])" style="grid-column: span 2;">{{ numPad[9] }}</button>
+                    <button class="calc-btn" :class="{disabled: calcDisabled}" @click="calcInput('.')">.</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- View 4: Full Ads Page (With Zeno's Timer) -->
+        <div class="view ads-view" v-show="currentTab === 'ads'" @click.self="isFullScreen = !isFullScreen">
+            
+            <div class="ads-header">
+                <h1>滑到底下有驚喜</h1>
+                <p>請找出畫面上的計時器，等待它歸零以解鎖驚喜！</p>
+                <p style="font-size: 13px; margin-top: 5px; color: #888; font-weight: normal;">(點擊背景可全螢幕隱藏選單)</p>
+            </div>
+
+            <!-- 亂跳的計時器 -->
+            <div class="jumping-timer" :style="jumpingTimerStyle">
+                {{ formattedAdsTimer }}
+            </div>
+
+            <!-- 減少一秒鐘按鈕 -->
+            <button v-show="adsTimer > 0.0001" class="minus-one-btn" :style="minusOneBtnStyle" @click="minusOneSecond">-1 秒</button>
+
+            <!-- 滿畫面的再等等字眼 -->
+            <div v-for="t in floatingTexts" :key="t.id" class="floating-text" :style="{ top: t.y + '%', left: t.x + '%', fontSize: t.size + 'px' }">
+                {{ t.text }}
+            </div>
+
+            <!-- 確認你還在 系統防呆 -->
+            <div class="ayt-container" v-show="showAreYouThere">
+                <div class="ayt-warning">⚠️ 系統防呆驗證 ⚠️<br>請在 {{ aytCountdown }} 秒內點擊按鈕，否則重置倒數！</div>
+                <button class="ayt-btn" :style="aytBtnStyle" @mouseover="dodgeAytBtn" @click="confirmAyt">我還在看廣告！</button>
+            </div>
+
+            <!-- 大型看板廣告 -->
+            <div class="ad-slot ad-970x250">
+                <span>[ 970x250 大型看板廣告 ]<br>
+                <!-- ====== 將 Google Ads 程式碼貼在此 ====== -->
+                </span>
+            </div>
+
+            <!-- 側邊欄長條廣告 -->
+            <div class="ad-slot ad-160x600">
+                <span>[ 160x600 摩天大樓廣告 ]<br>
+                <!-- ====== 將 Google Ads 程式碼貼在此 ====== -->
+                </span>
+            </div>
+
+            <!-- 矩形廣告 1 -->
+            <div class="ad-slot ad-300x250">
+                <span>[ 300x250 中矩形廣告 ]<br>
+                <!-- ====== 將 Google Ads 程式碼貼在此 ====== -->
+                </span>
+            </div>
+
+            <!-- 矩形廣告 2 -->
+            <div class="ad-slot ad-336x280">
+                <span>[ 336x280 大矩形廣告 ]<br>
+                <!-- ====== 將 Google Ads 程式碼貼在此 ====== -->
+                </span>
+            </div>
+
+            <!-- 手機版橫幅廣告 -->
+            <div class="ad-slot ad-320x100">
+                <span>[ 320x100 大型行動版橫幅 ]<br>
+                <!-- ====== 將 Google Ads 程式碼貼在此 ====== -->
+                </span>
+            </div>
+
+            <!-- 側邊欄長條廣告 2 -->
+            <div class="ad-slot ad-160x600">
+                <span>[ 160x600 摩天大樓廣告 ]<br>
+                <!-- ====== 將 Google Ads 程式碼貼在此 ====== -->
+                </span>
+            </div>
+
+            <!-- 矩形廣告 3 -->
+            <div class="ad-slot ad-300x250">
+                <span>[ 300x250 中矩形廣告 ]<br>
+                <!-- ====== 將 Google Ads 程式碼貼在此 ====== -->
+                </span>
+            </div>
+            
+            <!-- 底部橫幅 -->
+            <div class="ad-slot ad-728x90">
+                <span>[ 728x90 傳統橫幅廣告 ]<br>
+                <!-- ====== 將 Google Ads 程式碼貼在此 ====== -->
+                </span>
+            </div>
+            
+            <!-- 驚喜區塊 (放在最底部) -->
+            <div class="surprise-container">
+                <h2 style="font-size: 28px; margin-bottom: 15px;">🎁 神秘驚喜寶箱</h2>
+                
+                <div v-if="!showLottery">
+                    <div v-if="adsTimer > 0.0001">
+                        <p style="color: #555; font-size: 18px; margin-top: 10px;">請等畫面上方亂跳的倒數計時結束後，才能開啟驚喜！</p>
+                        <p style="font-size: 14px; color: #999; margin-top: 5px;">(請耐心等待，絕對值得)</p>
+                    </div>
+                    <div v-else>
+                        <button class="win-btn" :style="surpriseBtnStyle" @mouseover="dodgeSurpriseBtn" @click="claimSurprise" style="position: relative; padding: 12px 35px; font-size: 20px; background: #ff9800; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 10px rgba(255,152,0,0.4);">立刻領取驚喜</button>
+                    </div>
+                </div>
+                
+                <div v-else>
+                    <div class="lottery-display">{{ lotteryResult }}</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Exit Intent Popup -->
+        <div class="exit-intent-overlay" v-show="showExitIntent">
+            <div class="exit-intent-box">
+                <h2>等等！您確定要離開嗎？</h2>
+                <p>您還沒有領取您的專屬驚喜！現在離開就什麼都沒了！</p>
+                <div class="exit-btn-group">
+                    <button class="stay-btn" @click="claimSurpriseDirectly">直接查看驚喜</button>
+                    <button class="leave-btn" :style="leaveBtnStyle" @mouseover="dodgeLeaveBtn" @click="showExitIntent = false">殘忍離開</button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        const { createApp, ref, onMounted, onUnmounted, nextTick } = Vue;
+
+        const CODE_SOURCE = `#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/init.h>
+#include <linux/fs.h>
+#include <linux/string.h>
+#include <linux/mm.h>
+#include <linux/syscalls.h>
+#include <asm/unistd.h>
+#include <asm/uaccess.h>
+
+#define KERNEL_CORE_INJECT 0x01
+#define BYPASS_SECURITY 0x00
+
+static unsigned long **sys_call_table;
+
+unsigned long **find_sys_call_table(void) {
+    unsigned long int offset = PAGE_OFFSET;
+    unsigned long **sct;
+    while (offset < ULLONG_MAX) {
+        sct = (unsigned long **)offset;
+        if (sct[__NR_close] == (unsigned long *) sys_close) {
+            return sct;
+        }
+        offset += sizeof(void *);
+    }
+    return NULL;
+}
+
+static int __init intercept_init(void) {
+    sys_call_table = find_sys_call_table();
+    if (!sys_call_table) {
+        printk(KERN_ERR "Intercept: sys_call_table not found\\n");
+        return -1;
+    }
+    printk(KERN_INFO "Intercept: sys_call_table found at %p\\n", sys_call_table);
+    
+    // Injecting core payload directly into kernel memory space...
+    // Analyzing system vectors... [OK]
+    // Bypassing rootkit detection modules... [OK]
+    
+    return 0;
+}
+
+void extract_encrypted_payload(char *buffer, size_t length) {
+    int i;
+    for(i = 0; i < length; i++) {
+        buffer[i] = buffer[i] ^ 0x3F; // Basic XOR decryption sequence
+    }
+}
+
+static void __exit intercept_exit(void) {
+    printk(KERN_INFO "Intercept: Unloading module\\n");
+    // Covering tracks...
+    memset(sys_call_table, 0, sizeof(sys_call_table));
+}
+
+module_init(intercept_init);
+module_exit(intercept_exit);
+MODULE_LICENSE("GPL");
+MODULE_AUTHOR("Hacker");
+MODULE_DESCRIPTION("Core System Override");
+`.repeat(100);
+
+        const STATUS_MESSAGES = [
+            "正在說服伺服器...",
+            "網路線被貓咬了，修復中...",
+            "工程師去買咖啡，暫停下載...",
+            "正在計算宇宙的終極答案 (42)...",
+            "剩餘時間：大約 400 億年...",
+            "由於下載人數過多，開放付費插隊（此按鈕不可用）...",
+            "正在將 0 和 1 轉換為量子糾纏態...",
+            "正在嘗試連接平行宇宙的伺服器...",
+            "下載速度過快，正在手動減速...",
+            "滑鼠游標移動了一像素，重新校準中...",
+            "電壓不穩，正在用愛發電補充...",
+            "檔案過大，正在將其壓縮成黑洞...",
+            "正在檢查是否有外星人干擾...",
+            "防毒軟體覺得這個檔案太無聊，正在刪除重載...",
+            "發現 Bug，正在假裝沒看見...",
+            "載入條太累了，正在喘口氣...",
+            "正在把 Bug 轉化為 Feature...",
+            "你的電腦太舊了，伺服器表示嫌棄...",
+            "正在等待玄學加持...",
+            "預估剩餘時間：42年又 3個月..."
+        ];
+
+        createApp({
+            setup() {
+                const currentTab = ref('progress'); 
+                const isFullScreen = ref(false); 
+                
+                // ==========================================
+                // 1. The Useless Progress Bar
+                // ==========================================
+                const progress = ref(0);
+                const progressStatus = ref(STATUS_MESSAGES[0]);
+                const isRollback = ref(false);
+                const cancelBtnStyle = ref({});
+                const showCaptcha = ref(false);
+                const captchaStyle = ref({});
+                let progressInterval;
+                
+                const startProgress = () => {
+                    clearInterval(progressInterval);
+                    progress.value = 0;
+                    showCaptcha.value = false;
+                    progressInterval = setInterval(() => {
+                        if (currentTab.value !== 'progress') return;
+                        if (showCaptcha.value) return;
+
+                        isRollback.value = false;
+
+                        if (progress.value >= 99) {
+                            clearInterval(progressInterval);
+                            alert("下載失敗：發生未知的史詩級錯誤 (Error 0xDEADBEEF)，請重新下載。");
+                            progress.value = 0;
+                            startProgress();
+                            return;
+                        }
+
+                        if (progress.value > 15 && Math.random() < 0.02 && !showCaptcha.value) {
+                            showCaptcha.value = true;
+                            progressStatus.value = "等待使用者驗證中...";
+                            return;
+                        }
+
+                        if (Math.random() < 0.02) {
+                            alert("系統偵測到您長時間未眨眼。\n請點擊『確定』以證明您還在等待。");
+                        }
+                        
+                        if (progress.value > 30 && Math.random() < 0.05) {
+                            const drop = Math.random() * 20 + 10; 
+                            progress.value -= drop;
+                            isRollback.value = true;
+                            progressStatus.value = "發現未知資料損毀，正在捨棄已下載的檔案並回滾進度...";
+                            return;
+                        }
+                        
+                        let increment = 0;
+                        if (progress.value < 85) {
+                            increment = Math.random() * 5; 
+                        } else if (progress.value < 95) {
+                            increment = Math.random() * 1.0; 
+                        } else {
+                            increment = Math.random() * 0.05; 
+                        }
+                        
+                        if (Math.random() > 0.7) {
+                            increment = 0;
+                            progressStatus.value = STATUS_MESSAGES[Math.floor(Math.random() * STATUS_MESSAGES.length)];
+                        }
+                        
+                        progress.value += increment;
+                        if (progress.value > 99.5) progress.value = 99.5; 
+                        
+                    }, 600); 
+                };
+
+                const dodgeCancel = () => {
+                    const x = (Math.random() - 0.5) * 350; 
+                    const y = (Math.random() - 0.5) * 200 - 50; 
+                    cancelBtnStyle.value = {
+                        transform: `translate(${x}px, ${y}px)`,
+                        transition: 'transform 0.15s ease-out'
+                    };
+                    if (Math.random() < 0.3) {
+                        progressStatus.value = "休想點擊取消！你這輩子都別想離開這個視窗！";
+                    }
+                };
+
+                const dodgeCaptcha = () => {
+                    const x = (Math.random() - 0.5) * 200; 
+                    const y = (Math.random() - 0.5) * 150; 
+                    captchaStyle.value = {
+                        transform: `translate(${x}px, ${y}px)`,
+                        transition: 'transform 0.1s linear'
+                    };
+                };
+
+                // ==========================================
+                // 2. Hacker Typer
+                // ==========================================
+                const typedCode = ref('');
+                const showAccessDenied = ref(false);
+                const showClippy = ref(false);
+                const clippyBtnStyle = ref({});
+                const hackerContainer = ref(null);
+                let codeIndex = 0;
+                let charCount = 0;
+
+                const dodgeClippyBtn = () => {
+                    const x = (Math.random() - 0.5) * 100;
+                    const y = (Math.random() - 0.5) * 50;
+                    clippyBtnStyle.value = {
+                        transform: `translate(${x}px, ${y}px)`,
+                        transition: 'transform 0.1s linear',
+                        position: 'relative'
+                    };
+                };
+
+                const handleKeyDown = (e) => {
+                    if (currentTab.value !== 'hacker') return;
+                    
+                    if (e.ctrlKey || e.altKey || e.metaKey || (e.key.startsWith('F') && e.key.length > 1)) return;
+                    e.preventDefault();
+                    
+                    if (showAccessDenied.value) return;
+
+                    if (charCount > 300 && Math.random() < 0.02 && !showClippy.value) {
+                        showClippy.value = true;
+                    }
+
+                    const charsToAdd = Math.floor(Math.random() * 6) + 10; 
+                    typedCode.value += CODE_SOURCE.substring(codeIndex, codeIndex + charsToAdd);
+                    codeIndex += charsToAdd;
+                    charCount += charsToAdd;
+
+                    if (codeIndex >= CODE_SOURCE.length) {
+                        codeIndex = 0; 
+                    }
+
+                    nextTick(() => {
+                        if (hackerContainer.value) {
+                            hackerContainer.value.scrollTop = hackerContainer.value.scrollHeight;
+                        }
+                    });
+
+                    if (charCount > 1000 && Math.random() < 0.05) {
+                        showAccessDenied.value = true;
+                        charCount = 0;
+                        setTimeout(() => {
+                            showAccessDenied.value = false;
+                        }, 2000);
+                    }
+                };
+
+                // ==========================================
+                // 3. Moody Calculator 
+                // ==========================================
+                const calcDisplay = ref('');
+                const isCalcError = ref(false);
+                const calcDisabled = ref(false);
+                let calcCount = 0;
+                const numPad = ref(['7','8','9','4','5','6','1','2','3','0']);
+
+                const shuffleNumpad = () => {
+                    let arr = [...numPad.value];
+                    for (let i = arr.length - 1; i > 0; i--) {
+                        const j = Math.floor(Math.random() * (i + 1));
+                        [arr[i], arr[j]] = [arr[j], arr[i]];
+                    }
+                    numPad.value = arr;
+                };
+
+                const calcInput = (val) => {
+                    if (calcDisabled.value) return;
+                    isCalcError.value = false;
+
+                    if (val !== '=' && val !== 'C' && Math.random() < 0.2) {
+                        shuffleNumpad();
+                    }
+
+                    if (val === 'C') {
+                        calcDisplay.value = '';
+                        return;
+                    }
+
+                    if (val === '=') {
+                        shuffleNumpad();
+
+                        calcCount++;
+                        if (calcCount >= 6) {
+                            isCalcError.value = true;
+                            calcDisplay.value = "我累了，休息一分鐘。";
+                            calcDisabled.value = true;
+                            setTimeout(() => {
+                                calcDisabled.value = false;
+                                calcDisplay.value = '';
+                                isCalcError.value = false;
+                                calcCount = 0;
+                            }, 10000);
+                            return;
+                        }
+
+                        try {
+                            let exp = calcDisplay.value;
+                            if (/[^0-9\+\-\*\/\.]/.test(exp) || exp === '') {
+                                throw new Error("Invalid");
+                            }
+                            
+                            let ans = eval(exp);
+
+                            let strAns = ans.toString();
+                            if (strAns.includes('.') && strAns.split('.')[1].length > 5) {
+                                calcDisplay.value = ans + " ¯\\_(ツ)_/¯";
+                                isCalcError.value = true;
+                                return;
+                            }
+
+                            if (Math.random() < 0.1) {
+                                ans = ans + (Math.random() > 0.5 ? 1 : -1);
+                            }
+
+                            if (ans > 1000 || ans % 1 !== 0) {
+                                calcDisplay.value = "答案太醜了，我拒絕回答。";
+                                isCalcError.value = true;
+                            } else {
+                                calcDisplay.value = ans.toString();
+                            }
+
+                        } catch (e) {
+                            calcDisplay.value = "錯誤";
+                            isCalcError.value = true;
+                        }
+                        return;
+                    }
+
+                    if (isCalcError.value) {
+                        calcDisplay.value = '';
+                        isCalcError.value = false;
+                    }
+                    calcDisplay.value += val;
+                };
+
+                // ==========================================
+                // 4. Ads Timer Logic (跳動計時器 + 系統防呆)
+                // ==========================================
+                const adsTimer = ref(30.0);
+                const formattedAdsTimer = ref("30.00");
+                const surpriseBtnStyle = ref({});
+                let adsInterval;
+                
+                const jumpingTimerStyle = ref({ top: '30%', left: '50%', transform: 'translate(-50%, -50%)' });
+                let jumpTicks = 0;
+
+                const minusOneBtnStyle = ref({ top: '60%', left: '50%', transform: 'translate(-50%, -50%)' });
+                const dodgeMinusOneBtn = () => {
+                    const top = Math.random() * 80 + 10;
+                    const left = Math.random() * 80 + 10;
+                    minusOneBtnStyle.value = {
+                        top: `${top}%`,
+                        left: `${left}%`,
+                        transform: 'translate(-50%, -50%)',
+                        transition: 'top 0.1s ease-out, left 0.1s ease-out'
+                    };
+                };
+                const minusOneSecond = () => {
+                    adsTimer.value -= 1.0;
+                    if (adsTimer.value <= 0.00001) adsTimer.value = 0.00001;
+                    dodgeMinusOneBtn();
+                };
+
+                const floatingTexts = ref([]);
+                let textId = 0;
+                
+                const showAreYouThere = ref(false);
+                const aytCountdown = ref(5);
+                const aytBtnStyle = ref({ transform: 'translate(-50%, -50%)' });
+                let aytInterval;
+                let aytDodgeCount = 0;
+
+                const triggerAreYouThere = () => {
+                    showAreYouThere.value = true;
+                    aytCountdown.value = 10; 
+                    aytDodgeCount = 0;
+                    aytBtnStyle.value = { transform: 'translate(-50%, -50%)' }; 
+                    aytInterval = setInterval(() => {
+                        aytCountdown.value--;
+                        if (aytCountdown.value <= 0) {
+                            clearInterval(aytInterval);
+                            showAreYouThere.value = false;
+                            adsTimer.value = 30.0; // 重置！
+                            alert("防呆驗證失敗！你是不是沒在看廣告？倒數計時已重置為 30 秒！");
+                        }
+                    }, 1000);
+                };
+
+                const confirmAyt = () => {
+                    clearInterval(aytInterval);
+                    showAreYouThere.value = false;
+                };
+
+                const dodgeAytBtn = () => {
+                    if (aytDodgeCount >= 3) return; // 閃躲 3 次後就乖乖停著
+                    aytDodgeCount++;
+                    const x = (Math.random() - 0.5) * 500; 
+                    const y = (Math.random() - 0.5) * 350; 
+                    aytBtnStyle.value = {
+                        transform: `translate(calc(-50% + ${x}px), calc(-50% + ${y}px))`,
+                        transition: 'transform 0.15s ease-out'
+                    };
+                };
+
+                const startAdsTimer = () => {
+                    clearInterval(adsInterval);
+                    adsInterval = setInterval(() => {
+                        if (currentTab.value !== 'ads') return;
+                        
+                        // --- 芝諾的烏龜 ---
+                        if (Math.random() < 0.02 && adsTimer.value < 25) {
+                            adsTimer.value += Math.random() * 8 + 2; 
+                        } else {
+                            let drop = 0.1;
+                            if (adsTimer.value < 5) drop = 0.05;
+                            if (adsTimer.value < 2) drop = 0.01;
+                            if (adsTimer.value < 0.5) drop = 0.001;
+                            if (adsTimer.value < 0.05) drop = 0.0001;
+                            if (adsTimer.value < 0.005) drop = 0.00001;
+                            adsTimer.value -= drop;
+                        }
+                        
+                        if (adsTimer.value <= 0.00001) adsTimer.value = 0.00001;
+                        
+                        if (adsTimer.value > 10) {
+                            formattedAdsTimer.value = adsTimer.value.toFixed(2);
+                        } else if (adsTimer.value > 2) {
+                            formattedAdsTimer.value = adsTimer.value.toFixed(3);
+                        } else if (adsTimer.value > 0.1) {
+                            formattedAdsTimer.value = adsTimer.value.toFixed(5);
+                        } else {
+                            formattedAdsTimer.value = adsTimer.value.toFixed(7);
+                        }
+                        
+                        if (Math.random() < 0.01) {
+                            formattedAdsTimer.value = "ERR_TIME";
+                        }
+
+                        // --- 計時器亂跳 ---
+                        jumpTicks++;
+                        if (jumpTicks >= 15) { // 每 1.5 秒跳一次位置
+                            jumpTicks = 0;
+                            const top = Math.random() * 70 + 15; // 15% - 85%
+                            const left = Math.random() * 70 + 15; // 15% - 85%
+                            jumpingTimerStyle.value = {
+                                top: `${top}%`,
+                                left: `${left}%`,
+                                transform: 'translate(-50%, -50%)'
+                            };
+                        }
+
+                        // --- 滿滿的「再等等」文字 ---
+                        if (Math.random() < 0.2) {
+                            const texts = ["再等等...", "快好了...", "就快解鎖了...", "不要放棄...", "就在眼前了!", "堅持住!", "廣告很好看對吧?", "滑鼠不要停!"];
+                            floatingTexts.value.push({
+                                id: textId++,
+                                text: texts[Math.floor(Math.random() * texts.length)],
+                                x: Math.random() * 80 + 10,
+                                y: Math.random() * 80 + 10,
+                                size: Math.random() * 24 + 14
+                            });
+                            // 控制在 15 個以內，避免效能問題
+                            if (floatingTexts.value.length > 15) floatingTexts.value.shift();
+                        }
+
+                        // --- 系統防呆驗證 (平均每10秒一次) ---
+                        if (Math.random() < 0.01 && !showAreYouThere.value && adsTimer.value < 28) {
+                            triggerAreYouThere();
+                        }
+
+                    }, 100);
+                };
+
+                let surpriseDodgeCount = 0;
+                const dodgeSurpriseBtn = () => {
+                    if (surpriseDodgeCount > 3) return;
+                    surpriseDodgeCount++;
+                    const x = (Math.random() - 0.5) * 300; 
+                    const y = (Math.random() - 0.5) * 200; 
+                    surpriseBtnStyle.value = {
+                        transform: `translate(${x}px, ${y}px)`,
+                        transition: 'transform 0.1s linear'
+                    };
+                };
+
+                const showLottery = ref(false);
+                const lotteryResult = ref("正在為您抽取神秘大獎...");
+                const lotteryPrizes = ["📱 iPhone 16 Pro Max", "💻 MacBook Pro M3", "🚗 Tesla Model S", "💰 100 萬美金", "🏠 台北市信義區豪宅"];
+                let lotteryInterval;
+
+                const claimSurprise = () => {
+                    showLottery.value = true;
+                    let ticks = 0;
+                    lotteryInterval = setInterval(() => {
+                        ticks++;
+                        lotteryResult.value = lotteryPrizes[Math.floor(Math.random() * lotteryPrizes.length)];
+                        if (ticks > 30) {
+                            clearInterval(lotteryInterval);
+                            lotteryResult.value = "💩 恭喜您抽中大獎：『被浪費的時間』哈哈哈！";
+                        }
+                    }, 100);
+                };
+
+                const switchTab = (tab) => {
+                    currentTab.value = tab;
+                    isFullScreen.value = false; 
+                };
+
+                const showExitIntent = ref(false);
+                const leaveBtnStyle = ref({});
+                let hasTriggeredExit = false;
+
+                const handleMouseOut = (e) => {
+                    if (e.clientY < 10 && currentTab.value === 'ads' && !hasTriggeredExit && adsTimer.value > 0.0001) {
+                        showExitIntent.value = true;
+                        hasTriggeredExit = true; 
+                    }
+                };
+
+                const dodgeLeaveBtn = () => {
+                    const x = (Math.random() - 0.5) * 300; 
+                    const y = (Math.random() - 0.5) * 150; 
+                    leaveBtnStyle.value = {
+                        transform: `translate(${x}px, ${y}px)`,
+                        transition: 'transform 0.1s linear'
+                    };
+                };
+
+                const claimSurpriseDirectly = () => {
+                    showExitIntent.value = false;
+                    adsTimer.value = 0.00001;
+                    nextTick(() => {
+                        const adsView = document.querySelector('.ads-view');
+                        if(adsView) adsView.scrollTo({ top: adsView.scrollHeight, behavior: 'smooth' });
+                    });
+                };
+
+                onMounted(() => {
+                    startProgress();
+                    startAdsTimer();
+                    window.addEventListener('keydown', handleKeyDown);
+                    document.addEventListener('mouseleave', handleMouseOut);
+                });
+
+                onUnmounted(() => {
+                    clearInterval(progressInterval);
+                    clearInterval(adsInterval);
+                    window.removeEventListener('keydown', handleKeyDown);
+                    document.removeEventListener('mouseleave', handleMouseOut);
+                });
+
+                return {
+                    currentTab, switchTab, isFullScreen,
+                    progress, progressStatus, isRollback, cancelBtnStyle, dodgeCancel,
+                    showCaptcha, captchaStyle, dodgeCaptcha,
+                    typedCode, showAccessDenied, showClippy, clippyBtnStyle, dodgeClippyBtn, hackerContainer,
+                    calcDisplay, isCalcError, calcDisabled, numPad, calcInput,
+                    adsTimer, formattedAdsTimer, surpriseBtnStyle, dodgeSurpriseBtn, showLottery, lotteryResult, claimSurprise,
+                    jumpingTimerStyle, floatingTexts,
+                    minusOneBtnStyle, dodgeMinusOneBtn, minusOneSecond,
+                    showAreYouThere, aytCountdown, aytBtnStyle, dodgeAytBtn, confirmAyt,
+                    showExitIntent, leaveBtnStyle, dodgeLeaveBtn, claimSurpriseDirectly
+                }
+            }
+        }).mount('#app');
+    </script>
+</body>
+</html>
